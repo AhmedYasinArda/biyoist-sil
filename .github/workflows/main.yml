@@ -23,5 +23,5 @@ jobs:
           extended: true
 
       - name: Run Hugo
-        working-directory: exampleSite
-        run: hugo --themesDir ../..
+        working-directory: 
+        run: hugo 
