@@ -4,25 +4,30 @@ backend:
 
 publish_mode: editorial_workflow
 
-# Medya klasörü hatasını çözmek için:
 media_folder: "static/images"
 public_folder: "/images"
 
 collections:
-  - name: "notlar"
-    label: "Notlar"
-    folder: "content/docs" # Kök dizin
+  - name: "docs"
+    label: "Dökümanlar ve Modüller"
+    folder: "content/docs" # Tüm taramanın başlayacağı kök klasör
     extension: "md"
     format: "frontmatter"
     create: true
-    # ALT KLASÖR DESTEĞİ BURADA:
+
+    # 1. KRİTİK AYAR: Alt klasörleri CMS'e tanıtır
+    nested: true
+
+    # 2. KRİTİK AYAR: Dosyaların yerini bozmadan kaydeder
+    # {{dirname}}: Dosyanın bulunduğu klasör yolunu korur (moduller/modül 1 gibi)
+    # {{slug}}: Dosya adını korur
     path: "{{dirname}}/{{slug}}"
-    slug: "{{slug}}"
-    filter:
-      field: "title"
-      value: ".*" # Başlığı olan her şeyi getir
+
+    # Klasörlerin içindeki _index.md dosyalarını da görebilmek için:
+    filter: {field: "title", value: ".*"}
+
     fields:
       - {label: "Başlık", name: "title", widget: "string"}
       - {label: "İçerik", name: "body", widget: "markdown"}
       - {label: "Sıralama (Weight)", name: "weight", widget: "number", required: false}
-      - {label: "Draft", name: "draft", widget: "boolean", default: false}
+      - {label: "Kitap Menüsü mü?", name: "bookFlatSection", widget: "boolean", default: false, required: false}
