@@ -1,0 +1,22 @@
+backend:
+  name: git-gateway
+  branch: main # Sitenin ana branch adı (master veya main)
+
+# DENETLEME SİSTEMİ BURADA AKTİF EDİLİYOR
+publish_mode: editorial_workflow
+
+media_folder: "static/images" # Görsellerin yükleneceği yer
+public_folder: "/images"
+
+collections:
+  - name: "notlar"
+    label: "Notlar"
+    folder: "content/docs" # Hugo Book genelde docs klasörünü kullanır
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - {label: "Başlık", name: "title", widget: "string"}
+      - {label: "Yayın Tarihi", name: "date", widget: "datetime"}
+      - {label: "Açıklama", name: "description", widget: "string", required: false}
+      - {label: "İçerik", name: "body", widget: "markdown"}
+      - {label: "Ağırlık (Sıralama)", name: "weight", widget: "number", default: 1}
