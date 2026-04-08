@@ -1,0 +1,144 @@
+{{- /* Benzersiz bir ID oluşturuyoruz ki aynı sayfada birden fazla quiz olursa karışmasın */ -}}
+{{- $seed := delimit (shuffle (split "abcdefghijklmnopqrstuvwxyz" "")) "" -}}
+{{- $quizId := substr $seed 0 6 -}}
+
+{{- /* Konfeti kütüphanesini ve CSS'i sayfaya sadece BİR KERE eklemek için Scratch kullanıyoruz */ -}}
+{{- if not (.Page.Scratch.Get "quizAssetsLoaded") -}}
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<style>
+  .quiz-wrapper { max-width: 600px; margin: 2rem auto; padding: 1.5rem; border: 1px solid #eaeaea; border-radius: 8px; background-color: #fafafa; box-shadow: 0 4px 6px rgba(0,0,0,0.05); font-family: inherit; }
+  .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 2px solid #ddd; padding-bottom: 0.5rem; }
+  .quiz-header h3 { margin: 0; color: #333; }
+  .quiz-question-text { font-size: 1.1rem; font-weight: 500; margin-bottom: 1.5rem; color: #222; }
+  .options-grid { display: flex; flex-direction: column; gap: 0.8rem; }
+  .option-btn { color: #333; padding: 0.8rem 1rem; border: 2px solid #ddd; border-radius: 6px; background: white; cursor: pointer; text-align: left; font-size: 1rem; transition: all 0.2s ease; }
+  .option-btn:hover:not(:disabled) { border-color: #007bff; background-color: #f0f7ff; }
+  .option-btn.correct { border-color: #28a745; background-color: #e6f4ea; color: #1e7e34; }
+  .option-btn.wrong { border-color: #dc3545; background-color: #fce8e6; color: #c82333; }
+  .option-btn:disabled { cursor: not-allowed; opacity: 0.8; }
+  .feedback-box { margin-top: 1.5rem; padding: 1rem; border-radius: 6px; font-size: 0.95rem; display: none; }
+  .feedback-box.visible { display: block; }
+  .feedback-box.error-feedback { background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; }
+  .feedback-box.success-feedback { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+  .quiz-footer { display: flex; justify-content: space-between; margin-top: 2rem; }
+  .book-btn { padding: 0.6rem 1.2rem; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; transition: background-color 0.2s; }
+  .book-btn:hover:not(:disabled) { background-color: #0056b3; }
+  .book-btn:disabled { background-color: #cccccc; cursor: not-allowed; }
+</style>
+{{- .Page.Scratch.Set "quizAssetsLoaded" true -}}
+{{- end -}}
+
+{{- /* Markdown'dan gelen JSON verisini parse ediyoruz */ -}}
+{{- $quizData := .Inner | transform.Unmarshal -}}
+
+<div id="quiz-{{ $quizId }}" class="quiz-wrapper">
+  <div class="quiz-header">
+    <h3 class="question-title">Soru 1</h3>
+    <span class="question-counter">1 / X</span>
+  </div>
+  
+  <div class="quiz-body">
+    <p class="quiz-question-text">Soru yükleniyor...</p>
+    <div class="options-grid"></div>
+  </div>
+
+  <div class="feedback-box"></div>
+
+  <div class="quiz-footer">
+    <button class="book-btn prev-btn" disabled>Önceki</button>
+    <button class="book-btn next-btn">Sonraki</button>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // Sadece bu quiz bileşeninin içindeki elementleri seçiyoruz
+    const container = document.getElementById('quiz-{{ $quizId }}');
+    
+    // Hugo JSON verisini güvenli bir şekilde JavaScript objesine çeviriyor
+    const quizData = {{ $quizData | jsonify | safeJS }};
+    
+    let currentIndex = 0;
+    let userAnswers = new Array(quizData.length).fill(null);
+
+    const titleEl = container.querySelector('.question-title');
+    const counterEl = container.querySelector('.question-counter');
+    const textEl = container.querySelector('.quiz-question-text');
+    const optionsGrid = container.querySelector('.options-grid');
+    const feedbackBox = container.querySelector('.feedback-box');
+    const prevBtn = container.querySelector('.prev-btn');
+    const nextBtn = container.querySelector('.next-btn');
+
+    function loadQuestion() {
+      const q = quizData[currentIndex];
+      titleEl.innerText = `Soru ${currentIndex + 1}`;
+      counterEl.innerText = `${currentIndex + 1} / ${quizData.length}`;
+      textEl.innerText = q.question;
+      
+      optionsGrid.innerHTML = '';
+      feedbackBox.className = 'feedback-box'; // reset classes
+      
+      q.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.innerText = opt;
+        btn.className = 'option-btn';
+        
+        if (userAnswers[currentIndex] !== null) {
+          btn.disabled = true;
+          if (idx === q.correctIndex) btn.classList.add('correct');
+          else if (idx === userAnswers[currentIndex]) btn.classList.add('wrong');
+        } else {
+          btn.addEventListener('click', () => checkAnswer(idx));
+        }
+        optionsGrid.appendChild(btn);
+      });
+
+      if (userAnswers[currentIndex] !== null) {
+        showFeedback(userAnswers[currentIndex] === q.correctIndex, q.explanation);
+      }
+
+      prevBtn.disabled = currentIndex === 0;
+      nextBtn.innerText = currentIndex === quizData.length - 1 ? "Bitir" : "Sonraki";
+    }
+
+    function checkAnswer(selectedIndex) {
+      const q = quizData[currentIndex];
+      userAnswers[currentIndex] = selectedIndex;
+      const buttons = optionsGrid.querySelectorAll('.option-btn');
+      
+      buttons.forEach(b => b.disabled = true);
+      const isCorrect = selectedIndex === q.correctIndex;
+
+      if (isCorrect) {
+        buttons[selectedIndex].classList.add('correct');
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      } else {
+        buttons[selectedIndex].classList.add('wrong');
+        buttons[q.correctIndex].classList.add('correct');
+      }
+      showFeedback(isCorrect, q.explanation);
+    }
+
+    function showFeedback(isCorrect, explanation) {
+      feedbackBox.classList.add('visible');
+      if (isCorrect) {
+        feedbackBox.classList.add('success-feedback');
+        feedbackBox.innerHTML = `<strong>Tebrikler, Doğru!</strong><br><br>${explanation}`;
+      } else {
+        feedbackBox.classList.add('error-feedback');
+        feedbackBox.innerHTML = `<strong>Yanlış Cevap.</strong><br><br><em>Doğrusu:</em> ${explanation}`;
+      }
+    }
+
+    prevBtn.addEventListener('click', () => {
+      if (currentIndex > 0) { currentIndex--; loadQuestion(); }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (currentIndex < quizData.length - 1) { currentIndex++; loadQuestion(); }
+      else { alert("Quiz bitti! Katılımınız için teşekkürler."); }
+    });
+
+    loadQuestion();
+  })();
+</script>
