@@ -10,24 +10,21 @@ public_folder: "/images"
 collections:
   - name: "docs"
     label: "Dökümanlar ve Modüller"
-    folder: "content/docs" # Tüm taramanın başlayacağı kök klasör
+    folder: "content/docs"
     extension: "md"
     format: "frontmatter"
     create: true
 
-    # 1. KRİTİK AYAR: Alt klasörleri CMS'e tanıtır
-    nested: true
+    # HATAYI ÇÖZEN KISIM: nested artık bir obje
+    nested:
+      depth: 10 # Kaç alt klasör derine kadar tarasın? (10 yeterli olur)
+      summary: "{{title}}" # Klasör ağacında ne görünsün?
 
-    # 2. KRİTİK AYAR: Dosyaların yerini bozmadan kaydeder
-    # {{dirname}}: Dosyanın bulunduğu klasör yolunu korur (moduller/modül 1 gibi)
-    # {{slug}}: Dosya adını korur
+    # Alt klasör yapısını korumak için path ayarı kalmalı
     path: "{{dirname}}/{{slug}}"
-
-    # Klasörlerin içindeki _index.md dosyalarını da görebilmek için:
-    filter: {field: "title", value: ".*"}
+    slug: "{{slug}}"
 
     fields:
       - {label: "Başlık", name: "title", widget: "string"}
       - {label: "İçerik", name: "body", widget: "markdown"}
       - {label: "Sıralama (Weight)", name: "weight", widget: "number", required: false}
-      - {label: "Kitap Menüsü mü?", name: "bookFlatSection", widget: "boolean", default: false, required: false}
