@@ -1,26 +1,28 @@
 backend:
   name: git-gateway
-  branch: main # Sitenin ana branch adı (master veya main)
+  branch: main
 
-# DENETLEME SİSTEMİ BURADA AKTİF EDİLİYOR
 publish_mode: editorial_workflow
 
-media_folder: "static/images" # Görsellerin yükleneceği yer
+# Medya klasörü hatasını çözmek için:
+media_folder: "static/images"
 public_folder: "/images"
 
 collections:
   - name: "notlar"
     label: "Notlar"
-    folder: "content/docs"
-    filter: {field: "title", value: ".*"} # Başlığı olan her şeyi getir
+    folder: "content/docs" # Kök dizin
+    extension: "md"
+    format: "frontmatter"
     create: true
-    slug: "{{slug}}"
-    # Alt klasörleri de taraması için:
+    # ALT KLASÖR DESTEĞİ BURADA:
     path: "{{dirname}}/{{slug}}"
+    slug: "{{slug}}"
+    filter:
+      field: "title"
+      value: ".*" # Başlığı olan her şeyi getir
     fields:
       - {label: "Başlık", name: "title", widget: "string"}
-      - {label: "Yayın Tarihi", name: "date", widget: "datetime"}
-      - {label: "Açıklama", name: "description", widget: "string", required: false}
       - {label: "İçerik", name: "body", widget: "markdown"}
-      - {label: "Ağırlık (Sıralama)", name: "weight", widget: "number", default: 1}
-
+      - {label: "Sıralama (Weight)", name: "weight", widget: "number", required: false}
+      - {label: "Draft", name: "draft", widget: "boolean", default: false}
