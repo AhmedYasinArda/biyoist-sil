@@ -11,12 +11,16 @@ public_folder: "/images"
 collections:
   - name: "notlar"
     label: "Notlar"
-    folder: "content/docs" # Hugo Book genelde docs klasörünü kullanır
+    folder: "content/docs"
+    filter: {field: "title", value: ".*"} # Başlığı olan her şeyi getir
     create: true
     slug: "{{slug}}"
+    # Alt klasörleri de taraması için:
+    path: "{{dirname}}/{{slug}}"
     fields:
       - {label: "Başlık", name: "title", widget: "string"}
       - {label: "Yayın Tarihi", name: "date", widget: "datetime"}
       - {label: "Açıklama", name: "description", widget: "string", required: false}
       - {label: "İçerik", name: "body", widget: "markdown"}
       - {label: "Ağırlık (Sıralama)", name: "weight", widget: "number", default: 1}
+
