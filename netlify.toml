@@ -1,6 +1,22 @@
 [build]
-  command = "hugo"
+  # GitHub Actions'daki 'hugo --minify' komutun
+  command = "hugo --minify"
+  # Yayınlanacak klasör
   publish = "public"
 
 [build.environment]
-  HUGO_VERSION = "0.150.0" # Buraya kendi bilgisayarındaki sürümü yazabilirsin
+  # Actions dosyasındaki '0.158.0' versiyonu
+  HUGO_VERSION = "0.158.0"
+  # 'extended: true' ayarı için
+  HUGO_ENABLEGITINFO = "true"
+
+[context.production.environment]
+  # Eğer Netlify'da kendi alt klasör yapını korumak istersen
+  # (GitHub'daki /biyoist-sil/ gibi), baseURL'i burada zorlayabilirsin.
+  # Ama genelde Netlify'da site kök dizine kurulur.
+  HUGO_BASEURL = "https://biyoist-sil.netlify.app"
+
+# Decap CMS (Netlify CMS) kullanacağın için şu yönlendirme kuralı önemli:
+[[redirects]]
+  from = "/admin/*"
+  status = 200
